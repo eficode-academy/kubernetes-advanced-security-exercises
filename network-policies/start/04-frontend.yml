@@ -31,6 +31,8 @@ spec:
             memory: "64Mi"
             cpu: "50m"
         # Include curl and netcat for testing
+        # Note: Installing packages at runtime without pinning is intentionally
+        # insecure for this educational exercise to demonstrate network attacks
         command: ["/bin/sh"]
         args:
         - -c

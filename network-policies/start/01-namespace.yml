@@ -1,3 +1,6 @@
+# This file ensures the default namespace exists and has proper labels
+# Note: The default namespace exists in all clusters, but this ensures
+# it has the correct label for NetworkPolicy namespace selectors
 apiVersion: v1
 kind: Namespace
 metadata:

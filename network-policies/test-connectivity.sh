@@ -26,7 +26,7 @@ test_connection() {
     
     echo -n "Testing: $description ... "
     
-    if kubectl exec -it deployment/$from_pod -- nc -zv -w 2 $to_service $port &> /dev/null; then
+    if kubectl exec deployment/$from_pod -- nc -zv -w 2 $to_service $port &> /dev/null; then
         if [ "$should_work" = "yes" ]; then
             echo -e "${GREEN}✓ PASS${NC} (Connection successful)"
         else
