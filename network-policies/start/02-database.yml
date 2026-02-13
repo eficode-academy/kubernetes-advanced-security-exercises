@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  labels:
+    app: webapp
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: webapp
+        tier: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "insecure-password"
+        - name: POSTGRES_DB
+          value: "webapp"
+        ports:
+        - containerPort: 5432
+          name: postgres
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  labels:
+    app: webapp
+    tier: database
+spec:
+  selector:
+    app: webapp
+    tier: database
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  type: ClusterIP

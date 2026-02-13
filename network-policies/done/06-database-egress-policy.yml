@@ -1,0 +1,22 @@
+# Database should not initiate outbound connections
+# Only allow DNS for basic functionality
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-egress-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      tier: database
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS resolution only
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53

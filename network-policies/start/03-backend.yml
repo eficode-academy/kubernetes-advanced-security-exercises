@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: webapp
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: webapp
+        tier: backend
+    spec:
+      containers:
+      - name: api
+        image: hashicorp/http-echo:latest
+        args:
+        - "-text={\"status\":\"healthy\",\"service\":\"backend-api\"}"
+        - "-listen=:8080"
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: webapp
+    tier: backend
+spec:
+  selector:
+    app: webapp
+    tier: backend
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
