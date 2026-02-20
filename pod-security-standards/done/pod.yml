@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pss-demo
+  namespace: pss-test
+  labels:
+    app: pss-demo
+spec:
+  # Pod-level security context
+  securityContext:
+    # Run as non-root user (required by restricted profile)
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    # Use minimal seccomp profile
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: demo
+    image: ubuntu:22.04
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    # Container-level security context
+    securityContext:
+      # Prevent privilege escalation
+      allowPrivilegeEscalation: false
+      # Run as non-root (redundant but explicit)
+      runAsNonRoot: true
+      runAsUser: 1000
+      # Drop all capabilities
+      capabilities:
+        drop:
+        - ALL
+      # Use minimal seccomp profile
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "100m"
+      limits:
+        memory: "128Mi"
+        cpu: "200m"
+
