@@ -1,0 +1,30 @@
+# Control egress from frontend
+# Allow only backend communication and DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  - Ingress
+  ingress:
+  # Allow ingress on frontend container port 5000
+  - from:
+    - podSelector: {} # empty podSelector = any pod in THIS namespace only
+    ports:
+    - protocol: TCP
+      port: 5000
+  egress:
+  # Allow frontend -> backend egress
+  - to:
+    - podSelector:
+        matchLabels:
+          app: backend
+    ports:
+    - protocol: TCP
+      port: 5000
+      

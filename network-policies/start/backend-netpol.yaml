@@ -1,0 +1,30 @@
+# Allow frontend to call backend API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Ingress
+  # - Egress
+  # egress:
+  # # TODO: Add an egress rule to allow backend to reach postgres on port 5432
+  # # Hint: use podSelector with app: postgres
+  # - to:
+  #   - podSelector:
+  #       matchLabels:
+  #   ports:
+  #   - protocol: TCP
+  #     port:
+  ingress:
+  # Allow frontend -> backend ingress
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 5000
