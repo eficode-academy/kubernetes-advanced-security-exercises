@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rbac-demo-rolebinding
+subjects:
+  - kind: ServiceAccount
+    name: rbac-demo-sa
+roleRef:
+  kind: Role
+  name: overly-permissive
+  apiGroup: rbac.authorization.k8s.io
