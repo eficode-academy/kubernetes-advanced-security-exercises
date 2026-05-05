@@ -1,0 +1,16 @@
+# Control ingress and egress from frontend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow ingress on frontend container port 5000
+  - ports:
+    - protocol: TCP
+      port: 5000

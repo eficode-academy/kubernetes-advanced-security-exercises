@@ -1,0 +1,25 @@
+# Default deny all ingress and egress traffic but allow DNS resolution
+# This is the foundation of a zero-trust network
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}  # Applies to all pods in the namespace
+  policyTypes:
+  - Ingress
+  - Egress
+  egress:
+  # Allow only DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
