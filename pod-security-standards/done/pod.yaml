@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: pss-demo
+  name: k8s-sec
   labels:
-    app: pss-demo
+    app: k8s-sec
 spec:
   securityContext:
     runAsNonRoot: true
