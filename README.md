@@ -4,13 +4,10 @@ A selection of exercises for advanced Kubernetes security topics.
 
 The exercises are ordered to build on each other — each one introduces a new layer of the Kubernetes security model.
 
-> :exclamation: The exercises expect that you have access to a Kubernetes cluster and a personal namespace.
-> Please check with your instructor if you have not been assigned one.
-
 ## Exercises in suggested order
 
 - [Pod Security Context](pod-security-context/pod-security-context.md) — Harden pod specs with security context
-- [Pod Security Standards](pod-security-standards/pod-security-standards.md) — Enforce standards cluster-wide with Pod Security Admission
+- [Pod Security Standards](pod-security-standards/pod-security-standards.md) — Enforce standards on namespaces with Pod Security Admission
 - [Network Policies](network-policies/network-policies.md) — Restrict pod-to-pod and pod-to-external traffic using Kubernetes network policies
 - [RBAC & Service Accounts](rbac-service-account/rbac-service-account.md) — Control access to the Kubernetes API with roles, role bindings, and service accounts
 
