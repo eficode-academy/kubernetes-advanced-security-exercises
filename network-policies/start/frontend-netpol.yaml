@@ -9,18 +9,8 @@ spec:
       app: frontend
   policyTypes:
   - Ingress
-  - Egress
   ingress:
   # Allow ingress on frontend container port 5000
   - ports:
     - protocol: TCP
       port: 5000
-  egress:
-  # TODO: Add an egress rule to allow frontend to reach backend on port 5000
-  # Hint: use podSelector with app: backend
-  - to:
-    - podSelector:
-        matchLabels:
-    ports:
-    - protocol: TCP
-      port: 

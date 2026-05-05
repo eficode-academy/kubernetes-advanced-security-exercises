@@ -73,7 +73,7 @@ kubectl exec security-demo -- ls -la /malware.sh
 ### Test 3: Can we modify system binaries?
 
 ```bash
-kubectl exec security-demo -- sh -c 'echo "malicious code" >> /bin/bash'
+kubectl exec security-demo -- sh -c 'echo "echo ALERT: UNAUTHORIZED ACCESS DETECTED" >> /usr/bin/ls'
 ```
 
 <details>
@@ -282,7 +282,7 @@ kubectl exec security-demo -- id
 <summary>Expected output</summary>
 
 ```
-uid=10000 gid=0(root) groups=0(root)
+uid=10000(10000) gid=10000(10000) groups=10000(10000)
 ```
 
 **Success!** Now running as non-root user (UID 10000)
@@ -316,7 +316,7 @@ kubectl exec security-demo -- ls -la /tmp/test-file
 <summary>Expected output</summary>
 
 ```
--rw-r--r-- 1 10000 root 0 Jan 5 12:00 /tmp/test-file
+-rw-r--r-- 1 10000 10000 0 May  5 07:17 /tmp/test-file
 ```
 
 **Success!** Applications can still write to designated areas.
@@ -332,7 +332,7 @@ kubectl exec security-demo -- su -
 <summary>Expected output</summary>
 
 ```
-su: must be suid to work properly
+Password: su: Authentication failure
 command terminated with exit code 1
 ```
 
@@ -486,10 +486,10 @@ kubectl exec dangerous-pod -- ps aux
 **Result:** You can see ALL processes on the host node - not just your container! This includes system daemons, other containers, everything.
 
 ```bash
-kubectl exec dangerous-pod -- ss -tulpn
+kubectl exec dangerous-pod -- cat /proc/net/dev
 ```
 
-**Result:** You can see all network connections on the host!
+**Result:** You can see every Elastic Network Interface (ENI) on the node!
 
 Cleanup:
 

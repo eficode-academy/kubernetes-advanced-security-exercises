@@ -67,7 +67,7 @@ We'll deploy a typical 3-tier Python Flask application:
 kubectl api-resources | grep networkpolicies
 ```
 
-> **Your namespace:** Your namespace is `student-n`, where `n` is the number of your workstation. For example, if you are on **workstation-1**, your namespace is **student-1**. You are in your correct namespace by default.
+> **Note:** Your namespace is `student-n`, where `n` is the number of your workstation. For example, if you are on **workstation-1**, your namespace is **student-1**. You are already in your own namespace by default.
 
 ## Step 1: Deploy Insecure Configuration
 
@@ -187,7 +187,7 @@ content-type: text/html; charset=ISO-8859-1
 
 Connect to a pod from another namespace to test cross-namespace access:
 
-- Try to access frontend from student-0 namespace
+- For example, try to access frontend from student-0 namespace
 ```bash
 kubectl exec -it deployment/frontend -- curl -s http://frontend.student-0.svc.cluster.local:5000 --connect-timeout 5
 ```
@@ -278,14 +278,16 @@ Expected:
 
 ### 4.2 Apply `frontend-netpol.yaml`
 
-Open `start/frontend-netpol.yaml`. The ingress section is pre-filled (allows inbound traffic on port 5000). The egress section is empty.
+Open `start/frontend-netpol.yaml`. The ingress section is pre-filled (allows inbound traffic on port 5000). The egress section is missing.
 
-**Your task:** Fill in the egress section to allow `frontend` to reach `backend` on port 5000.
+**Your task:** Add the egress section to allow `frontend` to reach `backend` on port 5000.
 
 <details>
 <summary>💡 Hint</summary>
 
 ```yaml
+policyTypes:
+- Egress
 egress:
 - to:
   - podSelector:
@@ -337,7 +339,7 @@ Expected:
 
 ### 4.3 Apply `backend-netpol.yaml`
 
-Open `start/backend-netpol.yaml`. The ingress section is pre-filled (allows ingress from `frontend` on port 5000). The egress section is empty and commented out.
+Open `start/backend-netpol.yaml`. The ingress section is pre-filled (allows ingress from `frontend` on port 5000). The egress section is missing.
 
 **Step 1:** Apply the file as-is first (ingress only):
 
@@ -361,12 +363,14 @@ Expected:
 - Frontend → Backend: allowed ✅
 - Backend → Postgres: timeout ❌
 
-**Step 2:** Now uncomment and fill in the egress section to allow `backend` to reach `postgres` on port 5432.
+**Step 2:** Now add the egress section to allow `backend` to reach `postgres` on port 5432.
 
 <details>
 <summary>💡 Hint</summary>
 
 ```yaml
+policyTypes:
+- Egress
 egress:
 - to:
   - podSelector:
@@ -579,141 +583,27 @@ Here's a progression of NetworkPolicy implementations from least to most secure:
 
 **This exercise brings you from Level 0 → Level 4!**
 
-## Bonus: Advanced Scenarios
-
-### Scenario 1: Allow External API Access
-
-What if your backend needs to call an external API (e.g., payment processor)?
-
-<details>
-<summary>💡 Solution</summary>
-
-Add a CIDR-based egress rule:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: backend-external-api
-spec:
-  podSelector:
-    matchLabels:
-      tier: backend
-  policyTypes:
-  - Egress
-  egress:
-  - to:
-    - ipBlock:
-        cidr: 203.0.113.0/24  # Payment processor IP range
-    ports:
-    - protocol: TCP
-      port: 443
-```
-
-This allows backend to reach specific external IPs on port 443 (HTTPS).
-
-</details>
-
-### Scenario 2: Allow Health Checks from Ingress Controller
-
-<details>
-<summary>💡 Solution</summary>
-
-Add ingress rule for ingress controller namespace:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-ingress-controller
-spec:
-  podSelector:
-    matchLabels:
-      tier: frontend
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 80
-```
-
-</details>
-
-### Scenario 3: Allow Monitoring from Prometheus
-
-<details>
-<summary>💡 Solution</summary>
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-prometheus-scraping
-spec:
-  podSelector: {}  # All pods
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-    - podSelector:
-        matchLabels:
-          app: prometheus
-    ports:
-    - protocol: TCP
-      port: 9090  # Metrics port
-```
-
-</details>
 
 ## Cleanup
 
 Remove all resources created in this exercise:
 
+- Delete application resources
 ```bash
-# Delete application resources
+kubectl delete -f quotes-flask/
+```
+
+- Delete network policies
+```bash
 kubectl delete -f start/
-
-# Delete network policies
-kubectl delete -f done/
-
-# Delete test resources
-kubectl delete namespace production --ignore-not-found
 ```
 
-## Important Notes
-
-### CNI Requirements
-
-NetworkPolicies require a CNI plugin that supports them. Check your cluster:
-
-```bash
-# Check if NetworkPolicies are available
-kubectl api-resources | grep networkpolicies
-
-# Check your CNI (look for calico, cilium, weave, etc.)
-kubectl get pods -n kube-system
-```
-
-**Common CNI Plugins:**
-- ✅ **Calico** - Full NetworkPolicy support
-- ✅ **Cilium** - Full NetworkPolicy support + eBPF
-- ✅ **Weave Net** - Full NetworkPolicy support
-- ⚠️ **Flannel** - No NetworkPolicy support (use Canal for Flannel + Calico)
-- ❌ **kubenet** - No NetworkPolicy support
 
 ### Common Pitfalls
 
 1. **Forgetting DNS**
    - Pods need DNS to resolve service names
-   - Always allow UDP:53 to kube-system namespace
+   - Always allow UDP:53 and TCP:53 to kube-system namespace
    
 2. **Debugging connectivity issues**
    - Use `kubectl logs` to check for connection timeouts
@@ -734,98 +624,16 @@ kubectl get pods -n kube-system
 3. **Labels are critical** - NetworkPolicies use labels to select pods
 4. **Ingress ≠ Egress** - Control both directions for complete security
 5. **NetworkPolicies are additive** - Multiple policies can apply to the same pod
-6. **DNS is often forgotten** - Remember to allow DNS (UDP:53 to kube-system)
+6. **DNS is often forgotten** - Remember to allow DNS (UDP:53 and TCP:53 to kube-system)
 7. **Test thoroughly** - Verify both legitimate traffic works AND attacks are blocked
 
-## Next Steps
-
-Now that you understand NetworkPolicies, consider:
-
-1. **Combine with PodSecurityPolicies/PodSecurityAdmission** - Multi-layered defense
-2. **Implement service mesh** (Istio, Linkerd) - Adds mTLS and more granular policies
-3. **Use OPA/Gatekeeper** - Policy-as-code for automated governance
-4. **Monitor network traffic** - Use tools like Cilium Hubble or Calico observability
-5. **Implement network policies in CI/CD** - Automate security from the start
 
 ## Further Reading
 
 - [Kubernetes NetworkPolicy Documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [NetworkPolicy Recipes](https://github.com/ahmetb/kubernetes-network-policy-recipes)
-- [Calico NetworkPolicy Tutorial](https://docs.projectcalico.org/security/kubernetes-network-policy)
 - [CNCF Network Policy WG](https://github.com/kubernetes/community/tree/master/sig-network)
-- [Zero Trust Networks (Book)](https://www.oreilly.com/library/view/zero-trust-networks/9781491962183/)
 
-## Troubleshooting Guide
-
-### Issue: NetworkPolicies not enforced
-
-**Symptoms:** Connections that should be blocked still work
-
-**Solutions:**
-1. Verify CNI supports NetworkPolicies: `kubectl get pods -n kube-system`
-2. Check policies are created: `kubectl get networkpolicies`
-3. Verify pod labels: `kubectl get pods --show-labels`
-4. Check policy selectors match pod labels
-
-### Issue: Legitimate traffic blocked
-
-**Symptoms:** Application cannot communicate with dependencies
-
-**Solutions:**
-1. Check if default-deny is in place without allow rules
-2. Verify allow rules target correct pods (check labels)
-3. Ensure ports match: `kubectl get svc <service-name> -o yaml`
-4. Check for typos in namespace/pod selectors
-
-### Issue: DNS not working
-
-**Symptoms:** Pods cannot resolve service names
-
-**Solutions:**
-```bash
-# Test DNS
-kubectl exec -it deployment/frontend -- nslookup kubernetes.default
-
-# Check DNS policy
-kubectl get networkpolicies -o yaml | grep -A 10 "port: 53"
-
-# Verify kube-system namespace label
-kubectl get namespace kube-system --show-labels
-```
-
-Add DNS egress rule:
-```yaml
-egress:
-- to:
-  - namespaceSelector:
-      matchLabels:
-        kubernetes.io/metadata.name: kube-system
-  ports:
-  - protocol: UDP
-    port: 53
-```
-
-### Issue: Cannot test from pods
-
-**Symptoms:** `kubectl exec` fails or tools missing
-
-**Solutions:**
-```bash
-# Use a debug container
-kubectl debug -it deployment/frontend --image=nicolaka/netshoot -- /bin/bash
-
-# Or deploy a test pod
-kubectl run test-pod --image=nicolaka/netshoot -it --rm -- /bin/bash
-```
-
-### Issue: Policies not showing up
-
-**Symptoms:** `kubectl get networkpolicies` returns nothing
-
-**Solutions:**
-1. Check you're in the correct namespace: `kubectl config get-contexts`
-2. Policies are namespace-scoped: `kubectl get networkpolicies -A`
-3. Verify YAML is valid: `kubectl apply -f policy.yaml --dry-run=client`
 
 ---
 
